@@ -32,9 +32,28 @@ function handleSubmit() {
     closeAuthPopup(); // 팝업 닫기
 }
 
-// 1에서 9 사이의 랜덤 값을 반환하는 함수
+// 사용 가능한 랜덤 값 배열 (1, 2, 3, 4, 5, 6, 7, 8, 9, 11)
+const availableValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11];
+// 중복 방지를 위해 선택된 값을 추적하는 배열
+let usedRandomValues = [];
+
+// 중복되지 않는 랜덤 값을 반환하는 함수
 function getRandomValue() {
-    return Math.floor(Math.random() * 9) + 1;
+    // 모든 값이 사용되었을 경우 배열 초기화
+    if (usedRandomValues.length >= availableValues.length) {
+        usedRandomValues = [];
+    }
+
+    let value;
+    do {
+        // availableValues 배열에서 무작위로 값을 선택
+        const randomIndex = Math.floor(Math.random() * availableValues.length);
+        value = availableValues[randomIndex];
+    } while (usedRandomValues.includes(value));
+
+    // 중복 방지를 위해 선택된 값을 추적
+    usedRandomValues.push(value);
+    return value;
 }
 
 // 두 개의 랜덤 이미지 로드 함수
