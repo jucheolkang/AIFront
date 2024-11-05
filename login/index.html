@@ -48,12 +48,12 @@
             <span class="close-btn" onclick="closeAuthPopup()">&times;</span>
             <div class="image-section">
                 <div class="image-box" style="position: relative;">
-                    <img id="randomImage1" src="image/000012.jpg" alt="Image 1">
+                    <img id="randomImage1" src="image/loading.jpg" alt="Image 1">
                     <!-- 좌표에 랜덤 값을 표시할 div -->
                     <div class="random-value" id="image1-values"></div>
                 </div>
                 <div class="image-box" style="position: relative;">
-                    <img id="randomImage2" src="image/000013.jpg" alt="Image 2">
+                    <img id="randomImage2" src="image/loading.jpg" alt="Image 2">
                     <!-- 좌표에 랜덤 값을 표시할 div -->
                     <div class="random-value" id="image2-values"></div>
                 </div>
@@ -62,7 +62,7 @@
                 <p id="instructionText">두수의 곱을 입력하세요</p>
             </div>
             <div class="input-section">
-                <input type="text" placeholder="입력 창" id="inputField">
+                <input type="text" placeholder="입력 창" id="inputField" autocomplete="off">
                 <button type="button" onclick="handleSubmit()">입력</button>
             </div>
         </div>
