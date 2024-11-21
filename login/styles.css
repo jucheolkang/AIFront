@@ -118,6 +118,36 @@ a {
     margin-bottom: 20px;
 }
 
+.color-number-display {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.color-number-display span {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.color-circle {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.random-color-circle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    opacity: 0.6; /* 반투명 설정 */
+    pointer-events: none; /* 클릭 방지 */
+}
 .image-box {
     width: 178px;
     height: 218px;

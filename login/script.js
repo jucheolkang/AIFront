@@ -13,11 +13,16 @@ let randomValues = {
     image2: {}
 };
 
+// 색상 배열 및 색상-숫자 매핑
+const colors = ["노랑", "초록", "빨강", "보라", "파랑"];
+const colorMapping = {}; // 색상-숫자 매핑 객체
+
 // 팝업 열기
 function openAuthPopup() {
+    setupColorMapping(); // 색상-숫자 매핑 설정
     document.getElementById('authPopup').style.display = 'flex';
-    displayRandomInstruction(); // 팝업 열릴 때 랜덤 문구 설정
-    loadRandomImages(); // 두 개의 랜덤 이미지 로드 후 각 이미지 좌표 가져오기
+    displayRandomInstruction(); // 랜덤 문구 표시
+    loadRandomImages(); // 이미지 로드
 }
 
 // 랜덤 문구 표시 함수
@@ -26,11 +31,51 @@ function displayRandomInstruction() {
     document.getElementById('instructionText').innerText = instructions[randomIndex]; // 랜덤 문구 설정
 }
 
+// 색상-숫자 매칭 및 표시
+function setupColorMapping() {
+    const colorNumberDisplay = document.getElementById("colorNumberDisplay");
+    colorNumberDisplay.innerHTML = ''; // 기존 데이터 초기화
+
+    colors.forEach(color => {
+        const randomValue = getRandomValue(); // 랜덤 숫자 생성
+        colorMapping[color] = randomValue;
+
+        // 화면에 색상-숫자 매칭 정보 추가
+        const span = document.createElement('span');
+        span.innerHTML = `
+            <div class="color-circle" style="background-color: ${getColorCode(color)};"></div>
+            ${color}: ${randomValue}
+        `;
+        colorNumberDisplay.appendChild(span);
+    });
+}
+
+// 색상 이름에 따른 실제 색상 코드 반환
+function getColorCode(color) {
+    const colorCodes = {
+        "노랑": "yellow",
+        "초록": "green",
+        "빨강": "red",
+        "보라": "purple",
+        "파랑": "blue"
+    };
+    return colorCodes[color];
+}
+
 // 팝업 닫기
 function closeAuthPopup() {
     document.getElementById('authPopup').style.display = 'none';
 }
 
+// 곱셈 연산 수행 함수
+function calculateMultiplication(instruction) {
+    const key = coordinateKeys[instruction];
+    const value1 = randomValues.image1[key];
+    const value2 = randomValues.image2[key];
+    return value1 * value2;
+}
+
+// 사용자가 정답을 제출했을 때 처리
 function handleSubmit() {
     const inputField = document.getElementById('inputField');
     const inputValue = parseInt(inputField.value); // 사용자가 입력한 값을 가져옴
@@ -54,7 +99,6 @@ function handleSubmit() {
     closeAuthPopup();
 }
 
-
 // 곱셈을 위한 좌표 위치 정의 객체
 const coordinateKeys = {
     "두 이미지의 왼쪽 눈의 곱을 구하시오": "lefteye",
@@ -64,15 +108,7 @@ const coordinateKeys = {
     "두 이미지의 오른쪽 입꼬리의 곱을 구하시오": "rightmouth"
 };
 
-// 곱셈 연산 수행 함수
-function calculateMultiplication(instruction) {
-    const key = coordinateKeys[instruction];
-    const value1 = randomValues.image1[key];
-    const value2 = randomValues.image2[key];
-    return value1 * value2;
-}
-
-// 사용 가능한 랜덤 값 배열 (1, 2, 3, 4, 5, 6, 7, 8, 9, 11)
+// 사용 가능한 랜덤 값 배열
 const availableValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11];
 let usedRandomValues = [];
 
@@ -140,7 +176,7 @@ function fetchCoordinates(imageId, targetElementId, imageKey) {
     });
 }
 
-// 좌표 데이터를 받아 화면에 랜덤 값을 표시하는 함수
+// 좌표 데이터를 화면에 랜덤 색상으로 표시하는 함수
 function displayRandomValues(coordinatesData, targetElementId, imageKey) {
     const targetElement = document.getElementById(targetElementId);
     targetElement.innerHTML = '';
@@ -153,20 +189,26 @@ function displayRandomValues(coordinatesData, targetElementId, imageKey) {
         { key: "rightmouth", x: coordinatesData.rightmouth_x, y: coordinatesData.rightmouth_y }
     ];
 
-    points.forEach(coord => {
-        const value = getRandomValue();
-        const span = document.createElement('span');
-        span.className = 'random-value';
-        span.style.position = 'absolute';
-        span.style.top = `${coord.y}px`;
-        span.style.left = `${coord.x}px`;
-        span.textContent = value;
-        targetElement.appendChild(span);
+    // 각 이미지에 대해 독립적인 색상 배열을 셔플
+    const shuffledColors = [...colors].sort(() => Math.random() - 0.5);
+    points.forEach((coord, index) => {
+        const color = shuffledColors[index % shuffledColors.length];
+        const value = colorMapping[color];
+
+        // 반투명 원 추가
+        const circle = document.createElement('div');
+        circle.className = 'random-color-circle';
+        circle.style.backgroundColor = getColorCode(color);
+        circle.style.top = `${coord.y - 10}px`; // 원의 중심을 맞추기 위해 보정
+        circle.style.left = `${coord.x - 10}px`;
+
+        targetElement.appendChild(circle);
 
         // 랜덤 값을 저장
         randomValues[imageKey][coord.key] = value;
     });
 }
+
 
 // 함수들을 전역 스코프로 내보내기 (HTML 파일에서 호출하기 위해 필요)
 window.openAuthPopup = openAuthPopup;
