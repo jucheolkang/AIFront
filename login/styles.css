@@ -142,8 +142,8 @@ a {
 }
 .random-color-circle {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     opacity: 0.6; /* 반투명 설정 */
     pointer-events: none; /* 클릭 방지 */
