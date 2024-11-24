@@ -129,44 +129,73 @@ function getRandomValue() {
 }
 
 // 두 개의 랜덤 이미지 로드 함수
+// 두 개의 랜덤 이미지 로드 함수
 async function loadRandomImages() {
-    const folderRef = firebase.storage().refFromURL('gs://aifront-a7a19.appspot.com');
-    const imageList = await folderRef.listAll();
-    
-    const randomIndices = [];
-    while (randomIndices.length < 2) {
-        const randomIndex = Math.floor(Math.random() * imageList.items.length);
-        if (!randomIndices.includes(randomIndex)) {
-            randomIndices.push(randomIndex);
-        }
-    }
+    // image1 경로에서 랜덤 이미지 로드
+    const folderRef1 = firebase.storage().refFromURL('gs://aifront-a7a19.appspot.com/image1');
+    const imageList1 = await folderRef1.listAll();
 
-    const randomImageRef1 = imageList.items[randomIndices[0]];
+    const randomIndex1 = Math.floor(Math.random() * imageList1.items.length);
+    const randomImageRef1 = imageList1.items[randomIndex1];
     const url1 = await randomImageRef1.getDownloadURL();
     const imageName1 = randomImageRef1.name;
-    document.getElementById('randomImage1').src = url1;
+
+    const image1 = document.getElementById('randomImage1');
+    image1.src = url1;
+
+    // 이미지 크기 출력
+    image1.onload = () => {
+        console.log(`Image 1 Loaded: ${image1.src}`);
+        console.log(`Width: ${image1.naturalWidth}, Height: ${image1.naturalHeight}`);
+    };
+
     fetchCoordinates(imageName1, 'image1-values', 'image1');
 
-    const randomImageRef2 = imageList.items[randomIndices[1]];
+    // image2 경로에서 랜덤 이미지 로드
+    const folderRef2 = firebase.storage().refFromURL('gs://aifront-a7a19.appspot.com/image2');
+    const imageList2 = await folderRef2.listAll();
+
+    const randomIndex2 = Math.floor(Math.random() * imageList2.items.length);
+    const randomImageRef2 = imageList2.items[randomIndex2];
     const url2 = await randomImageRef2.getDownloadURL();
     const imageName2 = randomImageRef2.name;
-    document.getElementById('randomImage2').src = url2;
+
+    const image2 = document.getElementById('randomImage2');
+    image2.src = url2;
+
+    // 이미지 크기 출력
+    image2.onload = () => {
+        console.log(`Image 2 Loaded: ${image2.src}`);
+        console.log(`Width: ${image2.naturalWidth}, Height: ${image2.naturalHeight}`);
+    };
+
     fetchCoordinates(imageName2, 'image2-values', 'image2');
 }
+
+
 
 // Realtime Database에서 특정 이미지의 좌표 데이터를 가져오는 함수
 function fetchCoordinates(imageId, targetElementId, imageKey) {
     const dbRef = firebase.database().ref();
-    
+
     dbRef.once('value').then((snapshot) => {
         if (snapshot.exists()) {
             const coordinatesObject = snapshot.val();
-            const coordinatesData = Object.values(coordinatesObject).find(data => data.image_id === imageId);
-            
+            let coordinatesData;
+
+            // 데이터 소스 선택
+            if (imageKey === 'image1') {
+                // "def" 배열에서 해당 imageId를 가진 데이터를 찾음
+                coordinatesData = coordinatesObject.def.find(data => data.image_id === imageId);
+            } else if (imageKey === 'image2') {
+                // "gen" 배열에서 해당 imageId를 가진 데이터를 찾음
+                coordinatesData = coordinatesObject.gen.find(data => data.image_id === imageId);
+            }
+
             if (coordinatesData) {
                 displayRandomValues(coordinatesData, targetElementId, imageKey);
             } else {
-                console.error(`Coordinates not found for image ID: ${imageId}`);
+                console.error(`Coordinates not found for image ID: ${imageId} in ${imageKey === 'image1' ? 'def' : 'gen'}`);
             }
         } else {
             console.error('No coordinates data found in database');
@@ -175,6 +204,8 @@ function fetchCoordinates(imageId, targetElementId, imageKey) {
         console.error(`Error fetching coordinates: ${error}`);
     });
 }
+
+
 
 // 좌표 데이터를 화면에 랜덤 색상으로 표시하는 함수
 function displayRandomValues(coordinatesData, targetElementId, imageKey) {
