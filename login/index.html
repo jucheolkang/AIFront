@@ -6,6 +6,7 @@
     <title>로그인 페이지</title>
     <link rel="stylesheet" href="styles.css"> <!-- 외부 CSS 파일 연결 -->
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-storage.js"></script>
@@ -23,7 +24,7 @@
       
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-      </script>
+    </script>
 </head>
 <body>
     <div class="login-container">
@@ -49,12 +50,10 @@
             <div class="image-section">
                 <div class="image-box" style="position: relative;">
                     <img id="randomImage1" src="image/loading.jpg" alt="Image 1">
-                    <!-- 좌표에 랜덤 값을 표시할 div -->
                     <div class="random-value" id="image1-values"></div>
                 </div>
                 <div class="image-box" style="position: relative;">
                     <img id="randomImage2" src="image/loading.jpg" alt="Image 2">
-                    <!-- 좌표에 랜덤 값을 표시할 div -->
                     <div class="random-value" id="image2-values"></div>
                 </div>
             </div>
@@ -69,6 +68,11 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- 분리된 JS 파일 연결 -->
+    <script src="colorMapping.js"></script>
+    <script src="imageLoader.js"></script>
+    <script src="instructions.js"></script>
+    <script src="main.js"></script>
+    <script src="popup.js"></script>
 </body>
 </html>
