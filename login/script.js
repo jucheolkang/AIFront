@@ -87,9 +87,6 @@ function handleSubmit() {
     // 입력값과 정답 비교
     if (inputValue === correctAnswer) {
         alert("인증 성공");
-        
-        // 데이터 업데이트 호출
-        updateImage2Counts();
 
         // 성공 페이지로 이동
         window.location.href = "../success/success.html";
@@ -106,95 +103,6 @@ function handleSubmit() {
     closeAuthPopup();
 }
 
-// Firebase 데이터 업데이트 함수
-function updateImage2Counts() {
-    const dbRef = firebase.database().ref();
-    const image2Name = document.getElementById('randomImage2').src.split('/').pop(); // image2의 이름 가져오기
-
-    dbRef.once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            const coordinatesObject = snapshot.val();
-            const image2Data = coordinatesObject.gen.find(data => data.image_id === image2Name);
-
-            if (image2Data) {
-                // z_correct_count 증가 및 z_all_count 감소
-                const updatedData = {
-                    z_correct_count: (image2Data.z_correct_count || 0) + 1,
-                    z_all_count: Math.max(0, (image2Data.z_all_count || 0) - 1) // 값이 0 이하로 내려가지 않도록
-                };
-
-                // 데이터 업데이트
-                dbRef.child(`gen/${image2Name}`).update(updatedData)
-                    .then(async () => {
-                        console.log("데이터 업데이트 성공");
-
-                        // z_correct_count가 3이 되면 데이터 이동
-                        if (updatedData.z_correct_count === 3) {
-                            console.log(`z_correct_count가 3에 도달했습니다. 데이터를 이동합니다.`);
-
-                            // gen 데이터 가져오기
-                            const genRef = dbRef.child(`gen/${image2Name}`);
-                            const defRef = dbRef.child(`def/${image2Name}`);
-                            const imageData = (await genRef.once('value')).val();
-
-                            // 데이터를 def로 이동시키기
-                            await defRef.set(imageData);
-
-                            // gen에서 데이터 삭제
-                            await genRef.remove();
-                            console.log(`이미지 데이터가 gen에서 def로 이동되었고, gen 데이터가 삭제되었습니다.`);
-                        }
-                    })
-                    .catch((error) => {
-                        console.error(`데이터 업데이트 실패: ${error}`);
-                    });
-            } else {
-                console.error("해당 image_id에 대한 데이터를 찾을 수 없습니다.");
-            }
-        } else {
-            console.error("데이터베이스에 데이터가 없습니다.");
-        }
-    }).catch((error) => {
-        console.error(`데이터 가져오기 실패: ${error}`);
-    });
-}
-
-
-
-// 인증 실패 시 Firebase 데이터 업데이트
-function updateImage2IncorrectCounts(image2Name) {
-    const dbRef = firebase.database().ref();
-
-    dbRef.once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            const coordinatesObject = snapshot.val();
-            const image2Data = coordinatesObject.gen.find(data => data.image_id === image2Name);
-
-            if (image2Data) {
-                // z_incorrect_count 증가, z_all_count 감소
-                const updatedData = {
-                    z_incorrect_count: (image2Data.z_incorrect_count || 0) + 1,
-                    z_all_count: Math.max(0, (image2Data.z_all_count || 0) - 1) // 값이 0 이하로 내려가지 않도록
-                };
-
-                // 데이터 업데이트
-                dbRef.child(`gen/${image2Name}`).update(updatedData)
-                    .then(() => {
-                        console.log("실패 데이터 업데이트 성공");
-                    })
-                    .catch((error) => {
-                        console.error(`실패 데이터 업데이트 실패: ${error}`);
-                    });
-            } else {
-                console.error("해당 image_id에 대한 데이터를 찾을 수 없습니다.");
-            }
-        } else {
-            console.error("데이터베이스에 데이터가 없습니다.");
-        }
-    }).catch((error) => {
-        console.error(`데이터 가져오기 실패: ${error}`);
-    });
-}
 
 
 // 곱셈을 위한 좌표 위치 정의 객체
