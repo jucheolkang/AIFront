@@ -11,83 +11,22 @@ function closeAuthPopup() {
     document.getElementById('authPopup').style.display = 'none';
 }
 
-// 성공시 이미지, 좌표 이동
-async function moveImageAndCoordinates() {
-    const storageRef = firebase.storage();
-    const dbRef = firebase.database().ref();
-    console.log("moveImageAndCoordinates 동작");
+
+
+
+// 인증 성공 시 이미지 이동
+async function handleImageMoveOnSuccess() {
+    const sourceFolder = 'image2';
+    const destinationFolder = 'image1';
 
     try {
-        const image1FolderPath = 'gs://aifront-a7a19.appspot.com/image1';
-        const image2FolderPath = 'gs://aifront-a7a19.appspot.com/image2';
-
-        // 이미지 이동 준비
-        console.log("1. 이미지 이동 준비");
-        const sourceRef = storageRef.refFromURL(`${image2FolderPath}/${imageName2}`);
-        const destinationRef = storageRef.refFromURL(`${image1FolderPath}/${imageName2}`);
-        console.log(`imageName2: ${imageName2}`);
-
-        // 다운로드 URL 생성
-        console.log("2. 다운로드 URL 요청");
-        const downloadURL = await sourceRef.getDownloadURL(); // getDownloadURL() 비동기 처리
-        console.log(`3. 다운로드 URL: ${downloadURL}`);
-
-        // 다운로드 후 업로드
-        console.log("4. fetch 시작");
-        const response = await fetch(downloadURL);
-        if (!response.ok) {
-            throw new Error(`HTTP 오류: ${response.status}`);
-        }
-        console.log("5. fetch 완료");
-
-        console.log("6. blob 변환 시작");
-        const blob = await response.blob();
-        console.log("7. blob 변환 완료");
-
-        // 업로드 및 원본 삭제
-        console.log("8. 업로드 및 원본 삭제 시작");
-        await destinationRef.put(blob); // 이미지 업로드
-        console.log(`이미지 ${imageName2}가 image2에서 image1으로 이동되었습니다.`);
-
-        await sourceRef.delete(); // 업로드 성공 후 원본 이미지 삭제
-        console.log(`이미지 ${imageName2}가 sourceRef에서 삭제되었습니다.`);
-
-        // 데이터베이스 좌표 이동
-        console.log("9. 좌표 데이터 이동 시작");
-        const snapshot = await dbRef.once('value'); // 전체 데이터 가져오기
-        const coordinatesObject = snapshot.val(); // 데이터 변환
-
-        if (coordinatesObject && coordinatesObject.gen) {
-            // `gen`에서 `image_id`가 `imageName2`인 데이터 찾기
-            const coordinatesData = coordinatesObject.gen.find(data => data.image_id === imageName2);
-
-            if (coordinatesData) {
-                const defArray = coordinatesObject.def || []; // `def` 배열이 없으면 빈 배열로 초기화
-                const updatedGen = coordinatesObject.gen.filter(data => data.image_id !== imageName2);
-
-                // 데이터베이스 업데이트
-                await dbRef.update({
-                    def: [...defArray, coordinatesData],
-                    gen: updatedGen
-                });
-
-                console.log(`좌표 데이터가 gen에서 def로 이동되었습니다.`);
-            } else {
-                console.log(`좌표 데이터가 gen에서 찾을 수 없습니다.`);
-            }
-        } else {
-            console.log(`Firebase 데이터베이스에 gen 데이터가 없습니다.`);
-        }
+        console.log("이미지 이동 중:", imageName2);
+        await moveImageToFolder(imageName2, sourceFolder, destinationFolder);
+        console.log("이미지 이동 완료!");
     } catch (error) {
-        console.error(`오류 발생: ${error.message}`);
+        console.error("이미지 이동 실패:", error);
     }
-
-    console.log("moveImageAndCoordinates 동작 종료");
 }
-
-
-
-
 
 
 // 인증 성공 후 추가
@@ -100,9 +39,7 @@ function handleSubmit() {
 
     if (inputValue === correctAnswer) {
         alert("인증 성공");
-        
-        // 이미지 및 좌표 이동 실행
-        moveImageAndCoordinates();
+        handleImageMoveOnSuccess();
 
         // 인증 성공 후 페이지 이동
         window.location.href = "../success/success.html";
@@ -110,7 +47,7 @@ function handleSubmit() {
         alert("인증 실패");
         
         // 인증 실패 시 image2의 이미지 삭제
-        //deleteFailedImage();
+        deleteFailedImageAndUpdateJSON();
     }
 
     inputField.value = '';
@@ -134,19 +71,57 @@ function handleSubmit() {
     closeAuthPopup();
 }
 
-// 인증 실패 시 image2에서 이미지 삭제
-async function deleteFailedImage() {
+// JSON 데이터를 기반으로 이미지 삭제 및 수정
+async function deleteFailedImageAndUpdateJSON() {
     const storageRef = firebase.storage();
-    const image2FolderPath = 'gs://aifront-a7a19.appspot.com/image2';
+    const databaseRef = firebase.database().ref(); // 올바른 참조 생성
+    const folderPath = 'gs://aifront-a7a19.appspot.com/image2';
 
     try {
-        const sourceRef = storageRef.refFromURL(`${image2FolderPath}/${imageName2}`);
-        await sourceRef.delete();
-        console.log(`이미지 ${imageName2}가 인증 실패로 인해 삭제되었습니다.`);
+        // 1. JSON 데이터 읽기
+        const jsonSnapshot = await databaseRef.once('value'); // once() 메서드 호출
+        const jsonData = jsonSnapshot.val();
+
+        if (!jsonData || !jsonData.gen) {
+            console.error('JSON 데이터(gen)를 찾을 수 없습니다.');
+            return;
+        }
+
+        // 2. gen 항목에서 이미지 ID에 맞는 데이터 찾기
+        const filteredList = jsonData.gen.filter(item => item !== null);
+        const matchingData = filteredList.find(item => item.image_id === imageName2);
+
+        if (!matchingData) {
+            console.error(`이미지 ${imageName2}에 해당하는 JSON 데이터를 찾을 수 없습니다.`);
+            return;
+        }
+
+        // 3. z_incorrect_count 증가 및 확인
+        
+        if (matchingData.z_incorrect_count >= matchingData.z_all_count) {
+            // 조건 만족 시 이미지 삭제
+            const imageRef = storageRef.refFromURL(`${folderPath}/${imageName2}`);
+            await imageRef.delete();
+            console.log(`이미지 ${imageName2}가 삭제되었습니다.`);
+
+            // JSON 데이터에서 항목 삭제
+            const updatedList = filteredList.filter(item => item.image_id !== imageName2);
+            jsonData.gen = updatedList;
+
+            await databaseRef.set(jsonData);
+            console.log(`JSON 데이터에서 ${imageName2} 항목이 삭제되었습니다.`);
+        } else {
+            // 조건 미충족 시 JSON 데이터 업데이트
+            matchingData.z_incorrect_count += 1;
+            await databaseRef.set(jsonData);
+            console.log(`JSON 데이터 업데이트 완료: ${JSON.stringify(jsonData)}`);
+        }
     } catch (error) {
-        console.error(`이미지 삭제 중 오류 발생: ${error.message}`);
+        console.error(`작업 중 오류 발생: ${error.message}`);
     }
 }
+
+
 
 
 window.openAuthPopup = openAuthPopup;
