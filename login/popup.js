@@ -113,6 +113,7 @@ async function deleteFailedImageAndUpdateJSON() {
         } else {
             // 조건 미충족 시 JSON 데이터 업데이트
             matchingData.z_incorrect_count += 1;
+            matchingData.z_all_count -=1;
             await databaseRef.set(jsonData);
             console.log(`JSON 데이터 업데이트 완료: ${JSON.stringify(jsonData)}`);
         }
