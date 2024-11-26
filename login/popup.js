@@ -29,7 +29,7 @@ async function moveImageAndCoordinates() {
 
         // 다운로드 URL 생성
         console.log("2. 다운로드 URL 요청");
-        const downloadURL = await sourceRef.getDownloadURL();
+        const downloadURL = await sourceRef.getDownloadURL(); // getDownloadURL() 비동기 처리
         console.log(`3. 다운로드 URL: ${downloadURL}`);
 
         // 다운로드 후 업로드
@@ -45,13 +45,15 @@ async function moveImageAndCoordinates() {
         console.log("7. blob 변환 완료");
 
         // 업로드 및 원본 삭제
-        await destinationRef.put(blob).then(async () => {
-            await sourceRef.delete(); // 업로드 성공 후 삭제
-            console.log(`이미지 ${imageName2}가 image2에서 image1으로 이동되었습니다.`);
-        });
+        console.log("8. 업로드 및 원본 삭제 시작");
+        await destinationRef.put(blob); // 이미지 업로드
+        console.log(`이미지 ${imageName2}가 image2에서 image1으로 이동되었습니다.`);
+
+        await sourceRef.delete(); // 업로드 성공 후 원본 이미지 삭제
+        console.log(`이미지 ${imageName2}가 sourceRef에서 삭제되었습니다.`);
 
         // 데이터베이스 좌표 이동
-        console.log("8. 좌표 데이터 이동 시작");
+        console.log("9. 좌표 데이터 이동 시작");
         const snapshot = await dbRef.once('value'); // 전체 데이터 가져오기
         const coordinatesObject = snapshot.val(); // 데이터 변환
 
@@ -87,6 +89,7 @@ async function moveImageAndCoordinates() {
 
 
 
+
 // 인증 성공 후 추가
 function handleSubmit() {
     const inputField = document.getElementById('inputField');
@@ -107,10 +110,27 @@ function handleSubmit() {
         alert("인증 실패");
         
         // 인증 실패 시 image2의 이미지 삭제
-        deleteFailedImage();
+        //deleteFailedImage();
     }
 
     inputField.value = '';
+    
+    // REST API GET 요청
+    fetch('http://localhost:8080/hello')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            //return response.json(); // 응답을 JSON으로 변환
+            return response.text();// API가 문자열을 반환하므로 응답을 텍스트로 처리
+        })
+        .then(data => {
+            console.log('API 응답:', data);
+        })
+        .catch(error => {
+            console.error('API 요청 중 오류 발생:', error);
+        });
+
     closeAuthPopup();
 }
 
